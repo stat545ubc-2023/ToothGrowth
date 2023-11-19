@@ -1,13 +1,19 @@
+#install.packages("hrbrthemes")
+#install.packages("shinythemes")
 library(shiny)
 library(tidyverse)
+library(hrbrthemes)
 
 ## Define UI
 ui <- fluidPage(
 
+  ## Feature 1: Theme selector allows for user to choose an theme most desirable for them.
+  shinythemes::themeSelector(),
+
   ## Title and descriptive text
   titlePanel("🦷 Tooth Growth App 🦷"),
   h4("Use this app to explore the effect of vitamin c on
-     tooth growth in guinea pigs"),
+     tooth growth in guinea pigs."),
 
   ## Organize panels
   sidebarLayout(
@@ -23,21 +29,34 @@ ui <- fluidPage(
                   value = c(10, 30),
                   post = "mm"),
 
-      ## Feature 1: Checkbox Group to select levels displayed in supplements
+      ## Feature 2: Checkbox Group to select levels of supplements displayed.
+      ## Allows users to narrow focus on a supplement of their choice.
       checkboxGroupInput("supp_levels",
                          "Select at least one supplement to display:",
                          choices = c("Orange Juice" = "OJ",
                                      "Ascorbi Acid" = "VC"),
                           selected = c("Orange Juice" = "OJ",
-                                       "Ascorbi Acid" = "VC"))
+                                       "Ascorbi Acid" = "VC")),
+
+      #img(src='figures/image.jpg', align = "right")
     ),
 
     ## Main panel: boxplot and data table
     mainPanel(
-      plotOutput("id_boxplot"),
 
-      ## Feature 2: Use DT package to produce interactive table
-      DT::dataTableOutput("id_table")
+      ## Feature 3: Tabs presents a far more neat interface.
+      ## Reduces clutter so the user may digest only the information they would like to see.
+      tabsetPanel(
+        type = "tabs",
+        tabPanel("Plot", plotOutput("id_boxplot")),
+        ## Feature 4: Summary Table provides a numerical summary of the data after filtering from slider and checkbox is applied .
+        tabPanel("Summary", tableOutput("id_summary")),
+        ## Feature 5: Use DT package to produce interactive table.
+        ## Results in a more organized display given the users preference.
+        tabPanel("Data", DT::dataTableOutput("id_table"))
+      )
+
+
     )
   )
 )
@@ -58,18 +77,33 @@ server <- function(input, output) {
 
   ## Create boxplot from filtered data
   output$id_boxplot <- renderPlot({
-    ToothGrowth_filtered() %>%
-      ggplot(aes(x=factor(dose), y=len)) +
-        geom_boxplot() +
-        facet_grid(.~supp)
+    if (nrow(ToothGrowth_filtered()) > 0) {
+      ToothGrowth_filtered() %>%
+        ggplot(aes(x=factor(dose), y=len, fill = factor(dose))) +
+        geom_boxplot(alpha=0.4) +
+        facet_grid(.~supp) +
+        theme_ipsum() +
+        theme(legend.position="none") +
+        xlab("Dose (mg)") +
+        ylab("Tooth Length (mm)")
+    }
   })
 
-  ## Rander interactive data table
+  ## Render interactive data table
   output$id_table <- DT::renderDataTable({
     ToothGrowth_filtered()
+  })
+
+  ## Render data summary
+  output$id_summary <- renderTable({
+    ToothGrowth_filtered() %>%
+      group_by(supp) %>%
+      summarise(count = n(),
+                across(c(len, dose),
+                       c(mean = mean, sd = sd)))
   })
 }
 
 
-## Create shiny app
+## Run shiny app
 shinyApp(ui = ui, server = server)
