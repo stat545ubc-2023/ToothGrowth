@@ -49,7 +49,7 @@ ui <- fluidPage(
       tabsetPanel(
         type = "tabs",
         tabPanel("Plot", plotOutput("id_boxplot")),
-        ## Feature 4: Summary Table provides a numerical summary of the data after filtering from slider and checkbox is applied .
+        ## Feature 4: Summary Table provides a numerical summary of the data after filtering from slider and checkbox is applied.
         tabPanel("Summary", tableOutput("id_summary")),
         ## Feature 5: Use DT package to produce interactive table.
         ## Results in a more organized display given the users preference.
